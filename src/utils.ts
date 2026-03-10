@@ -1,3 +1,5 @@
+import type { Config } from "./type";
+
 export function mergeHeaders(
   headers1: Record<string, string> | Headers,
   headers2: Record<string, string> | Headers,
@@ -28,3 +30,34 @@ export function buildAbsoluteURL(url: string, baseURL?: string): string {
   }
   return url;
 }
+
+export function buildURL(
+  url: string,
+  params?: Record<string, any> | URLSearchParams,
+) {
+  if (!params) return url;
+
+  const search =
+    params instanceof URLSearchParams
+      ? params.toString()
+      : new URLSearchParams(params).toString();
+
+  if (!search) return url;
+
+  return url + (url.includes("?") ? "&" : "?") + search;
+}
+
+export function mergeConfig<D>(config1: Config<D>, config2?: Config<D>): Config<D> {
+  if (!config2) return config1;
+
+  const headers = mergeHeaders(
+    config1.headers ?? {},
+    config2.headers ?? {},
+  );
+
+  return {
+    ...config1,
+    ...config2,
+    headers,
+  };
+}   

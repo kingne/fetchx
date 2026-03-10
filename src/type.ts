@@ -1,3 +1,4 @@
+import type { BodyInit } from "bun";
 import type Http from "./core";
 
 export interface Config<D> {
@@ -8,6 +9,7 @@ export interface Config<D> {
   normalizeBody?: (body: any, headers: Headers) => any;
   validateStatus?: (status: number) => boolean;
   headers?: Record<string, string> | Headers;
+  params?: Record<string, any> | URLSearchParams;
   data?: D;
   signal?: AbortSignal;
   withCredentials?: boolean;
@@ -28,6 +30,7 @@ export type Method =
 export type RequestContext<D = any> = {
   url: string;
   config: Config<D>;
+  body?: BodyInit | null;
 };
 
 export type Middleware<D = any> = (

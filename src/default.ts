@@ -7,7 +7,7 @@ const defaults: Config<any> = {
     if (body instanceof FormData) {
       headers.delete("Content-Type");
     } else if (body instanceof URLSearchParams) {
-      if (headers.has("Content-Type")) {
+      if (!headers.has("Content-Type")) {
         headers.set(
           "Content-Type",
           "application/x-www-form-urlencoded;charset=UTF-8",
@@ -15,7 +15,7 @@ const defaults: Config<any> = {
       }
       body = body?.toString();
     } else if (isPlainObject(body)) {
-      if (headers.has("Content-Type")) {
+      if (!headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
       }
       body = JSON.stringify(body);

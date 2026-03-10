@@ -6,13 +6,13 @@ import type {
   NextFunction,
   RequestContext,
 } from "./type";
-import { buildAbsoluteURL, mergeHeaders } from "./utils";
+import { buildAbsoluteURL, buildURL, mergeConfig } from "./utils";
 
 class Http<D = any> {
   defaults: Config<D>;
   middlewares: Array<Middleware<D>> = [];
   constructor(config: Config<D> = {}) {
-    this.defaults = config;
+    this.defaults = mergeConfig(defaults as Config<D>, config);
   }
 
   use(middleware: Middleware<D>) {
@@ -32,7 +32,7 @@ class Http<D = any> {
   }
 
   request(url: string, config?: Config<D>) {
-    const mergedConfig = this._mergeConfig(config);
+    const mergedConfig = mergeConfig(this.defaults, config);
     const ctx: RequestContext<D> = {
       url,
       config: mergedConfig,
@@ -40,31 +40,24 @@ class Http<D = any> {
     const fn = this._compose();
     return fn(ctx);
   }
-    
-  private _mergeConfig(config?: Config<D>): Config<D> {
-    const headers = mergeHeaders(
-      this.defaults?.headers ?? {},
-      config?.headers ?? {},
-    );
-    return {
-      ...this.defaults,
-      ...config,
-      headers,
-    };
-  }
 
   private async _dispatch(ctx: RequestContext<D>) {
     const finalURL = buildAbsoluteURL(ctx.url, ctx.config.baseURL);
-    ctx.url = finalURL;
-    ctx.config.url = finalURL;
-    const normalizeBody = ctx.config.normalizeBody || defaults.normalizeBody;
-    let body = normalizeBody?.(ctx.config.data, ctx.config.headers as Headers);
+    const urlWithParams = buildURL(finalURL, ctx.config.params);
+    ctx.config.url = urlWithParams;
+    ctx.url = urlWithParams;
     const method = (ctx.config.method || "GET").toUpperCase() as Method;
     ctx.config.method = method;
+
+    const normalizeBody = ctx.config.normalizeBody || defaults.normalizeBody;
+    let body = normalizeBody?.(ctx.config.data, ctx.config.headers as Headers);
+
     if (method === "GET" || method === "HEAD") {
       body = undefined;
     }
-    const response = await fetch(ctx.url, {
+
+    ctx.body = body;
+    const response = await fetch(urlWithParams, {
       method,
       headers: ctx.config.headers,
       body,
